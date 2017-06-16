@@ -156,15 +156,73 @@ public final class DexMerger {
     }
 
     private Dex mergeDexes() throws IOException {
-        mergeStringIds();
-        mergeTypeIds();
-        mergeTypeLists();
-        mergeProtoIds();
-        mergeFieldIds();
-        mergeMethodIds();
-        mergeAnnotations();
-        unionAnnotationSetsAndDirectories();
-        mergeClassDefs();
+        DexException firstException = null;
+        try {
+            mergeStringIds();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeTypeIds();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeTypeLists();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeProtoIds();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeFieldIds();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeMethodIds();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeAnnotations();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            unionAnnotationSetsAndDirectories();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        try {
+            mergeClassDefs();
+        } catch (DexException e) {
+            if (firstException == null) {
+                firstException = e;
+            }
+        }
+        if (firstException != null) {
+            throw firstException;
+        }
 
         // computeSizesFromOffsets expects sections sorted by offset, so make it so
         Arrays.sort(contentsOut.sections);
@@ -183,8 +241,8 @@ public final class DexMerger {
         return dexOut;
     }
 
-    public Dex merge() throws IOException {
-        if (dexes.length == 1) {
+    public Dex merge(boolean isClasssDex) throws IOException {
+        if (!isClasssDex && dexes.length == 1) {
             return dexes[0];
         } else if (dexes.length == 0) {
             return null;
@@ -224,6 +282,7 @@ public final class DexMerger {
 
         return result;
     }
+    static ArrayList<String> logs = new ArrayList<>();
 
     /**
      * Reads an IDs section of two dex files and writes an IDs section of a
@@ -240,7 +299,7 @@ public final class DexMerger {
          * Merges already-sorted sections, reading one value from each dex into memory
          * at a time.
          */
-        public final void mergeSorted() {
+        public final void mergeSorted(String typeName, int maxCount) {
             TableOfContents.Section[] sections = new TableOfContents.Section[dexes.length];
             Dex.Section[] dexSections = new Dex.Section[dexes.length];
             int[] offsets = new int[dexes.length];
@@ -277,8 +336,21 @@ public final class DexMerger {
                 write(first.getKey());
                 outCount++;
             }
-
+            logOnce(String.format("%s ID count: %,d  (max:%d)", typeName, outCount, maxCount));
             getSection(contentsOut).size = outCount;
+
+            if (maxCount > 0 && outCount > maxCount) {
+                throw new DexIndexOverflowException("Too many " + typeName + " references: " + outCount + "; max is: " + maxCount +
+                        ".");
+            }
+
+        }
+
+        private void logOnce(String msg) {
+            if (logs.indexOf(msg) < 0) {
+                logs.add(msg);
+                context.err.println(msg);
+            }
         }
 
         private int readIntoMap(Dex.Section in, TableOfContents.Section section, IndexMap indexMap,
@@ -404,10 +476,11 @@ public final class DexMerger {
                 idsDefsOut.writeInt(stringDataOut.getPosition());
                 stringDataOut.writeStringData(value);
             }
-        }.mergeSorted();
+        }.mergeSorted("string", -1);
     }
 
     private void mergeTypeIds() {
+
         new IdMerger<Integer>(idsDefsOut) {
             @Override TableOfContents.Section getSection(TableOfContents tableOfContents) {
                 return tableOfContents.typeIds;
@@ -419,16 +492,16 @@ public final class DexMerger {
             }
 
             @Override void updateIndex(int offset, IndexMap indexMap, int oldIndex, int newIndex) {
-                if (newIndex < 0 || newIndex > 0xffff) {
-                    throw new DexIndexOverflowException("type ID not in [0, 0xffff]: " + newIndex);
-                }
+//                if (newIndex < 0 || newIndex > 0xffff) {
+//                    throw new DexIndexOverflowException("type ID not in [0, 0xffff]: " + newIndex);
+//                }
                 indexMap.typeIds[oldIndex] = (short) newIndex;
             }
 
             @Override void write(Integer value) {
                 idsDefsOut.writeInt(value);
             }
-        }.mergeSorted();
+        }.mergeSorted("type", 0xffff);
     }
 
     private void mergeTypeLists() {
@@ -462,16 +535,16 @@ public final class DexMerger {
             }
 
             @Override void updateIndex(int offset, IndexMap indexMap, int oldIndex, int newIndex) {
-                if (newIndex < 0 || newIndex > 0xffff) {
-                    throw new DexIndexOverflowException("proto ID not in [0, 0xffff]: " + newIndex);
-                }
+//                if (newIndex < 0 || newIndex > 0xffff) {
+//                    throw new DexIndexOverflowException("proto ID not in [0, 0xffff]: " + newIndex);
+//                }
                 indexMap.protoIds[oldIndex] = (short) newIndex;
             }
 
             @Override void write(ProtoId value) {
                 value.writeTo(idsDefsOut);
             }
-        }.mergeSorted();
+        }.mergeSorted("proto", 0xffff);
     }
 
     private void mergeFieldIds() {
@@ -485,16 +558,16 @@ public final class DexMerger {
             }
 
             @Override void updateIndex(int offset, IndexMap indexMap, int oldIndex, int newIndex) {
-                if (newIndex < 0 || newIndex > 0xffff) {
-                    throw new DexIndexOverflowException("field ID not in [0, 0xffff]: " + newIndex);
-                }
+//                if (newIndex < 0 || newIndex > 0xffff) {
+//                    throw new DexIndexOverflowException("field ID not in [0, 0xffff]: " + newIndex);
+//                }
                 indexMap.fieldIds[oldIndex] = (short) newIndex;
             }
 
             @Override void write(FieldId value) {
                 value.writeTo(idsDefsOut);
             }
-        }.mergeSorted();
+        }.mergeSorted("field", 0xffff);
     }
 
     private void mergeMethodIds() {
@@ -508,17 +581,17 @@ public final class DexMerger {
             }
 
             @Override void updateIndex(int offset, IndexMap indexMap, int oldIndex, int newIndex) {
-                if (newIndex < 0 || newIndex > 0xffff) {
-                    throw new DexIndexOverflowException(
-                        "method ID not in [0, 0xffff]: " + newIndex);
-                }
+//                if (newIndex < 0 || newIndex > 0xffff) {
+//                    throw new DexIndexOverflowException(
+//                        "method ID not in [0, 0xffff]: " + newIndex);
+//                }
                 indexMap.methodIds[oldIndex] = (short) newIndex;
             }
 
             @Override void write(MethodId methodId) {
                 methodId.writeTo(idsDefsOut);
             }
-        }.mergeSorted();
+        }.mergeSorted("method", 0xffff);
     }
 
     private void mergeAnnotations() {
@@ -1134,7 +1207,7 @@ public final class DexMerger {
         for (int i = 1; i < args.length; i++) {
             dexes[i - 1] = new Dex(new File(args[i]));
         }
-        Dex merged = new DexMerger(dexes, CollisionPolicy.KEEP_FIRST, new DxContext()).merge();
+        Dex merged = new DexMerger(dexes, CollisionPolicy.KEEP_FIRST, new DxContext()).merge(false);
         merged.writeTo(new File(args[0]));
     }
 

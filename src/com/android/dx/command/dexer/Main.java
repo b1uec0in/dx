@@ -480,7 +480,7 @@ public class Main {
         } else if (dexB == null) {
             result = dexA;
         } else {
-            result = new DexMerger(new Dex[] {dexA, dexB}, CollisionPolicy.KEEP_FIRST, context).merge();
+            result = new DexMerger(new Dex[] {dexA, dexB}, CollisionPolicy.KEEP_FIRST, context).merge(false);
         }
 
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
@@ -503,7 +503,8 @@ public class Main {
         if (dexes.isEmpty()) {
             return null;
         }
-        Dex merged = new DexMerger(dexes.toArray(new Dex[dexes.size()]), CollisionPolicy.FAIL, context).merge();
+        boolean isClassDex = args.outName.endsWith("/classes.dex");
+        Dex merged = new DexMerger(dexes.toArray(new Dex[dexes.size()]), CollisionPolicy.FAIL, context).merge(isClassDex);
         return merged.getBytes();
     }
 
