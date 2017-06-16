@@ -1,10 +1,13 @@
 # dx for method counting.
 
-always prints counts of field and method.
+always prints counts of field and method. (modified version of original dx.jar)
 
 ## vs. Android Studio APK Analyzer
 You can see method references of classes.dex on "Build - Analyze APK" menu.<br/>
-But, this is not available when build fails.
+But, this is not available when build fails. 
+
+If you don't want to use `MultiDex` and know how many methods are remove to build, this will be very useful.
+
 
 ## Output sample
 <pre>...
