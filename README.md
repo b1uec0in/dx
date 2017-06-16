@@ -3,7 +3,7 @@
 always prints counts of field and method.
 
 ## vs. Android Studio APK Analyzer
-You can see method references of classes.dex on "Build - Analyze APK" menu.
+You can see method references of classes.dex on "Build - Analyze APK" menu.<br/>
 But, this is not available when build fails.
 
 ## Output sample
