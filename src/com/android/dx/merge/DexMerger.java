@@ -336,7 +336,14 @@ public final class DexMerger {
                 write(first.getKey());
                 outCount++;
             }
-            logOnce(String.format("%s ID count: %,d  (max:%d)", typeName, outCount, maxCount));
+
+            String msg;
+            if (maxCount > 0 && outCount > maxCount) {
+                msg = String.format("%s ID count: %,d (max:%d +%d)", typeName, outCount, maxCount, (outCount - maxCount));
+            } else {
+                msg = String.format("%s ID count: %,d", typeName, outCount);
+            }
+            logOnce(msg);
             getSection(contentsOut).size = outCount;
 
             if (maxCount > 0 && outCount > maxCount) {
