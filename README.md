@@ -15,12 +15,12 @@ If you don't want to use `MultiDex` and you want to know how many methods are to
 :app:compileDevDebugNdk UP-TO-DATE
 :app:compileDevDebugSources
 :app:transformClassesWithDexForDevDebug
-<b style="color:red">String ID count: 91,857  (max:-1)
-type ID count: 12,636  (max:65535)
-proto ID count: 18,417  (max:65535)
-field ID count: 72,011  (max:65535)
-method ID count: 81,181  (max:65535)
-Dex: Error converting bytecode to dex:
+<b style="color:red">string ID count: 91,857
+type ID count: 12,636
+proto ID count: 18,417
+field ID count: 72,011 (max:65535 +6476)
+method ID count: 81,181 (max:65535 +15646)
+Error converting bytecode to dex:
 Cause: com.android.dex.DexIndexOverflowException: Too many field references: 72011; max is: 65535.
     UNEXPECTED TOP-LEVEL EXCEPTION:
     ...
